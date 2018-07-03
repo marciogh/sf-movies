@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "bluebird": "^3.5.1",
     "google-map-react": "^1.0.5",
     "node-fetch": "^2.1.2",
     "react": "^16.4.1",

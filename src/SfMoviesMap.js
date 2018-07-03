@@ -3,17 +3,14 @@
 import React from 'react';
 import GoogleMapReact from 'google-map-react';
 import NodeFetch from 'node-fetch';
-import Promise from 'bluebird'
 
 class SfMoviesComponent extends React.Component {
 
-    shouldComponentUpdate = true;
-
     render() {
-        console.log('rendering... ' + this.props.text)
         return (
-            <div style={{width: '150px', height: '50px', backgroundColor: 'white', border: '1px solid black'}}>
-                {this.props.text}
+            <div style={{width: '200px', height: '30px', backgroundColor: 'white', border: '1px solid black', padding: '5px'}}>
+                Movie: {this.props.movie}<br />
+                Location: {this.props.place}
             </div>
         )
     };
@@ -37,55 +34,75 @@ class SfMoviesMap extends React.Component {
         })
     }
 
-    handleChange(event) {
+
+    findPlaceFromQueryAsync(placesService, movie) {
+        return new Promise((resolve, reject) => {
+            placesService.findPlaceFromQuery({
+                query: movie.locations,
+                fields: ['name', 'geometry']
+            }, (results, status) => {
+                if (status === 'OK') {
+                    results.map((o) => {
+                        o.movie = movie.title;
+                        return o;
+                    })
+                    resolve(results);
+                } else {
+                    resolve(null);
+                }
+            });
+        });
+    }
+
+    async handleChange(event) {
 
         var markers = [];
         this.setState({
             markers: markers
         })
         const s = event.target.value;
-        if (s.length < 2) return;
+        if (s.length < 3) return;
         let placesService = new google.maps.places.PlacesService(this.state.map.map)
-        //Promise.promisifyAll(placesService)
-
-        NodeFetch('https://data.sfgov.org/resource/wwmu-gmzc.json?$q=' + encodeURI(s))
-            .then((movies) => {
-                movies.json()
-                    .then((moviesData) => {
-                        moviesData.forEach(movie => {
-                            placesService.findPlaceFromQuery({
-                                query: movie.locations,
-                                fields: ['name', 'geometry']
-                            }, (result) => {
-                                markers = markers.concat(result)
-                            });
-                        });
-                        console.log(markers)
-                        this.setState({
-                            markers: markers
-                        })
-                    })
-                })
+        const movies = await NodeFetch('https://data.sfgov.org/resource/wwmu-gmzc.json?$q=' + encodeURI(s));
+        const moviesData = await movies.json();
+        let findPlacesPromises = [];
+        moviesData.forEach(movie => {
+            findPlacesPromises.push(this.findPlaceFromQueryAsync(placesService, movie))
+        })
+        Promise.all(findPlacesPromises, {concurrency: 10}).then((r) => {
+            r.filter((o) => {
+                return o != null;
+            }).map((o) => {
+                markers = markers.concat(o);
+                return o;
+            });
+            console.log(markers);
+            this.setState({
+                markers: markers
+            });
+        }).catch((err) => {
+            console.log('error' + err);
+        });
     }
 
     render() {
-        let sfPoint = {lat: 37.755, lng: -122.450}
+        let sfPoint = {lat: 37.770, lng: -122.450}
         return (
-            <div style={{ height: '400px', width: '100%' }}>
+            <div style={{ height: '600px', width: '100%' }}>
                 <div style={{height: '20px', textAlign: 'center', padding: '10px'}}>
                     <input type="text" onChange={this.handleChange}/>
                 </div>
                 <GoogleMapReact
                     bootstrapURLKeys={{ key: 'AIzaSyCs-ikd7mvKWLaWttqp6aVzLRvoYspGBgw' }}
                     defaultCenter={sfPoint}
-                    defaultZoom={12}
+                    defaultZoom={13}
                     onGoogleApiLoaded={this.handleOnLoad}
                     yesIWantToUseGoogleMapApiInternals={true}
                 >
                     {this.state.markers.map(m => {
-                        console.log(m)
                         return <SfMoviesComponent
-                            text={m.name}
+                            movie={m.movie}
+                            place={m.name}
                             lat={m.geometry.location.lat()}
                             lng={m.geometry.location.lng()} />
                     })}
@@ -93,10 +110,6 @@ class SfMoviesMap extends React.Component {
             </div>
         );
     }
-}
-
-SfMoviesMap.defaultProps = {
-    sfCoordinates: {lat: 37.755, lng: -122.450}
 }
 
 export default SfMoviesMap;
