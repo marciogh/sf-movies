@@ -2,7 +2,8 @@
 
 import React from 'react';
 import GoogleMapReact from 'google-map-react';
-
+import NodeFetch from 'node-fetch';
+import Promise from 'bluebird'
 
 class SfMoviesComponent extends React.Component {
 
@@ -27,31 +28,44 @@ class SfMoviesMap extends React.Component {
             markers: []
         };
         this.handleChange = this.handleChange.bind(this);
-        this.handleSearchResults = this.handleSearchResults.bind(this);
         this.handleOnLoad = this.handleOnLoad.bind(this);
-    }
-
-    handleSearchResults(results, status) {
-        if (status === 'OK') {
-            this.setState({
-                markers: results
-            })
-        }
-    }
-
-    handleChange(event) {
-        const placesService = new google.maps.places.PlacesService(this.state.map.map)
-        placesService.findPlaceFromQuery({
-            query: event.target.value,
-            fields: ['name', 'geometry']
-        }, this.handleSearchResults);
-        event.preventDefault();
     }
 
     handleOnLoad(map) {
         this.setState({
             map: map
         })
+    }
+
+    handleChange(event) {
+
+        var markers = [];
+        this.setState({
+            markers: markers
+        })
+        const s = event.target.value;
+        if (s.length < 2) return;
+        let placesService = new google.maps.places.PlacesService(this.state.map.map)
+        //Promise.promisifyAll(placesService)
+
+        NodeFetch('https://data.sfgov.org/resource/wwmu-gmzc.json?$q=' + encodeURI(s))
+            .then((movies) => {
+                movies.json()
+                    .then((moviesData) => {
+                        moviesData.forEach(movie => {
+                            placesService.findPlaceFromQuery({
+                                query: movie.locations,
+                                fields: ['name', 'geometry']
+                            }, (result) => {
+                                markers = markers.concat(result)
+                            });
+                        });
+                        console.log(markers)
+                        this.setState({
+                            markers: markers
+                        })
+                    })
+                })
     }
 
     render() {
