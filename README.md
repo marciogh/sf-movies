@@ -16,7 +16,7 @@ See packages.json scripts for dependencies and test/build/deploy commands
 
 ## ToDo
 
-* Error handling. Only the happy path were tested
+* Error handling. Only the happy paths were tested
 * SfMoviesDAO testing with mocks
 * Some animation on map results
 * Closing other windows when clicking a star result on the map
