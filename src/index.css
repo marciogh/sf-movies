@@ -1,5 +1,44 @@
 body {
-  margin: 0;
-  padding: 0;
-  font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+}
+
+#github img {
+    z-index: 2;
+    position: absolute;
+    top: 0;
+    right: 0;
+    border: 0;
+}
+
+#sfMoviesComponent {
+    width: 300px;
+    height: 38px;
+    background: lightyellow;
+    border: 1px solid black;
+    padding: 5px;
+}
+
+#sfMoviesMapComponent #searchBox {
+    color: darkblue;
+    height: 32px;
+}
+
+#sfMoviesMapComponent #searchBox #form {
+    float: left;
+    margin-top: 6px;
+    margin-left: 10px;
+}
+
+#sfMoviesMapComponent #searchBox #loading {
+    float: left;
+    margin-left: 5px;
+}
+
+#sfMoviesMapComponent #map {
+    border-top: 4px solid lightblue;
+    border-bottom: 4px solid lightblue;
+    height: 500px;
+    width: 100%;
 }

@@ -3,14 +3,16 @@
 import React from 'react';
 import GoogleMapReact from 'google-map-react';
 import NodeFetch from 'node-fetch';
+import ReactLoading from 'react-loading';
 
 class SfMoviesComponent extends React.Component {
 
     render() {
         return (
-            <div style={{width: '200px', height: '30px', backgroundColor: 'white', border: '1px solid black', padding: '5px'}}>
+            <div id={"sfMoviesComponent"}>
                 Movie: {this.props.movie}<br />
-                Location: {this.props.place}
+                Location: {this.props.location} <br />
+                Google Location: {this.props.place}
             </div>
         )
     };
@@ -22,7 +24,8 @@ class SfMoviesMap extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            markers: []
+            markers: [],
+            loading: false
         };
         this.handleChange = this.handleChange.bind(this);
         this.handleOnLoad = this.handleOnLoad.bind(this);
@@ -37,13 +40,25 @@ class SfMoviesMap extends React.Component {
 
     async handleChange(event) {
         this.setState({
-            markers: []
+            markers: [],
         })
         const s = event.target.value;
         if (s.length < 3) return;
+        this.setState({
+            loading: true
+        })
         const movies = await NodeFetch('https://data.sfgov.org/resource/wwmu-gmzc.json?$q=' + encodeURI(s));
         const moviesData = await movies.json();
+        if (moviesData.length === 0) {
+            this.setState({
+                loading: false
+            })
+            return;
+        }
         moviesData.forEach(movie => {
+            this.setState({
+                loading: true
+            })
             this.state.placesService.findPlaceFromQuery({
                 query: movie.locations,
                 fields: ['name', 'geometry']
@@ -51,10 +66,14 @@ class SfMoviesMap extends React.Component {
                 if (status === 'OK' && results.length > 0) {
                     results.map((r) => {
                         r.movie = movie.title;
+                        r.location = movie.locations;
                         return r;
                     });
                     this.setState({
                         markers: this.state.markers.concat(results)
+                    })
+                    this.setState({
+                        loading: false
                     })
                 }
             });
@@ -62,31 +81,46 @@ class SfMoviesMap extends React.Component {
     }
 
     render() {
-        let sfPoint = {lat: 37.770, lng: -122.450}
+        let sfPoint = {lat: 37.775, lng: -122.450}
         return (
-            <div style={{ height: '600px', width: '100%' }}>
-                <div style={{height: '20px', textAlign: 'center', padding: '10px'}}>
-                    <input type="text" onChange={this.handleChange}/>
-                </div>
-                <GoogleMapReact
-                    bootstrapURLKeys={{ key: 'AIzaSyCs-ikd7mvKWLaWttqp6aVzLRvoYspGBgw' }}
-                    defaultCenter={sfPoint}
-                    defaultZoom={13}
-                    onGoogleApiLoaded={this.handleOnLoad}
-                    yesIWantToUseGoogleMapApiInternals={true}
-                >
+            <div id={"sfMoviesMapComponent"}>
+                <div id={"searchBox"}>
+                    <div id={"form"}>
+                        <span>Movie search &nbsp;</span>
+                        <input type="text" onChange={this.handleChange} />
+                    </div>
+                    <div id={"loading"}>
                     {
-                        this.state.markers.map(m => {
-                            return (
-                                <SfMoviesComponent
-                                    movie={m.movie}
-                                    place={m.name}
-                                    lat={m.geometry.location.lat()}
-                                    lng={m.geometry.location.lng()}
-                                />
-                            )
-                    })}
-                </GoogleMapReact>
+                        this.state.loading ?
+                            <ReactLoading type={'balls'} color={'orange'} height={32} width={32} />
+                            :
+                            null
+                    }
+                    </div>
+                </div>
+                <div id={"map"}>
+                    <GoogleMapReact
+                        bootstrapURLKeys={{ key: 'AIzaSyCs-ikd7mvKWLaWttqp6aVzLRvoYspGBgw' }}
+                        defaultCenter={sfPoint}
+                        defaultZoom={13}
+                        onGoogleApiLoaded={this.handleOnLoad}
+                        yesIWantToUseGoogleMapApiInternals={true}
+                    >
+                        {
+                            this.state.markers.map(m => {
+                                return (
+                                    <SfMoviesComponent
+                                        key={m.geometry.location.lat() + '' + m.geometry.location.lng()}
+                                        movie={m.movie}
+                                        place={m.name}
+                                        location={m.location}
+                                        lat={m.geometry.location.lat()}
+                                        lng={m.geometry.location.lng()}
+                                    />
+                                )
+                        })}
+                    </GoogleMapReact>
+                </div>
             </div>
         );
     }
