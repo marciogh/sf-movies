@@ -8,12 +8,38 @@ import Autocomplete from 'react-autocomplete';
 
 class SfMoviesComponent extends React.Component {
 
+    constructor(props) {
+        super(props)
+        this.state = {
+            infoVisible: false
+        }
+        this.renderOnClick = this.renderOnClick.bind(this)
+    }
+
+    renderOnClick() {
+        this.setState({
+            infoVisible: !this.state.infoVisible
+        })
+    }
+
     render() {
         return (
             <div id={"sfMoviesComponent"}>
-                Movie: {this.props.movie}<br />
-                Location: {this.props.location} <br />
-                Google Location: {this.props.place}
+                <img
+                    className={"star"}
+                    alt={this.props.location}
+                    src={"https://upload.wikimedia.org/wikipedia/commons/8/83/Gold_Star_%28with_border%29.svg"}
+                    onClick={this.renderOnClick}
+                />
+                {
+                    this.state.infoVisible ? (
+                            <div className={"info"}>
+                                Movie: {this.props.movie}<br />
+                                Location: {this.props.location} <br />
+                                Google Location: {this.props.place}
+                            </div>
+                    ) : <div />
+                }
             </div>
         )
     };
@@ -50,7 +76,7 @@ class SfMoviesMap extends React.Component {
         this.setState({
             loading: true
         })
-        const movies = await NodeFetch('https://data.sfgov.org/resource/wwmu-gmzc.json?$q=' + encodeURI(s));
+        const movies = await NodeFetch(`https://data.sfgov.org/resource/wwmu-gmzc.json?$where=title='${s}'`)
         const moviesData = await movies.json();
         if (moviesData.length === 0) {
             this.setState({
@@ -73,9 +99,7 @@ class SfMoviesMap extends React.Component {
                         return r;
                     });
                     this.setState({
-                        markers: this.state.markers.concat(results)
-                    })
-                    this.setState({
+                        markers: this.state.markers.concat(results),
                         loading: false
                     })
                 }
@@ -84,24 +108,29 @@ class SfMoviesMap extends React.Component {
     }
 
     async handleAutocompleteOnChange(event, value) {
-        console.log(value)
         this.setState({
             movieAutocompleteValue: value
         });
         if (value.length < 2) {
+            this.setState({
+                moviesAutocomplete: []
+            });
             return;
         }
+        this.setState({
+            loading: true,
+        });
         const movies = await NodeFetch(
             "https://data.sfgov.org/resource/wwmu-gmzc.json?$select=title&$group=title&$where=starts_with(upper(title),upper('" + encodeURI(value) + "'))"
         )
         const moviesData = await movies.json();
         this.setState({
+            loading: false,
             moviesAutocomplete: moviesData
         });
     }
 
     render() {
-        let sfPoint = {lat: 37.775, lng: -122.450}
         return (
             <div id={"sfMoviesMapComponent"}>
                 <div id={"searchBox"}>
@@ -124,15 +153,10 @@ class SfMoviesMap extends React.Component {
                             }}
                             value={this.state.movieAutocompleteValue}
                             menuStyle={{
-                                borderRadius: '3px',
-                                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.1)',
-                                background: 'rgba(255, 255, 255, 0.9)',
-                                padding: '2px 0',
-                                fontSize: '90%',
                                 position: 'fixed',
                                 overflow: 'auto',
-                                maxHeight: '50%', // TODO: don't cheat, let it flow to the bottom
-                                zIndex: '998',
+                                maxHeight: '200px',
+                                zIndex: '3',
                             }}
                         />
                     </div>
@@ -148,8 +172,8 @@ class SfMoviesMap extends React.Component {
                 <div id={"map"}>
                     <GoogleMapReact
                         bootstrapURLKeys={{ key: 'AIzaSyCs-ikd7mvKWLaWttqp6aVzLRvoYspGBgw' }}
-                        defaultCenter={sfPoint}
-                        defaultZoom={13}
+                        defaultCenter={{lat: 37.770, lng: -122.430}}
+                        defaultZoom={12}
                         onGoogleApiLoaded={this.handleOnLoad}
                         yesIWantToUseGoogleMapApiInternals={true}
                     >

@@ -18,8 +18,9 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "deploy": "aws s3 sync build/ s3://marciogh.com/sf-movies/ --cache-control no-cache --acl public-read --delete",
-    "test": "react-scripts test --env=jsdom",
+    "upload": "aws s3 sync build/ s3://marciogh.com/sf-movies/ --cache-control no-cache --acl public-read --delete",
+    "deploy": "npm run-script test && npm run-script build && npm run-script upload",
+    "test": "CI=true react-scripts test --env=jsdom",
     "source-map-explorer": "source-map-explorer build/static/js/*",
     "eject": "react-scripts eject"
   }
