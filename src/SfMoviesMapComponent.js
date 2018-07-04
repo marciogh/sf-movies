@@ -22,10 +22,8 @@ class SfMoviesMapComponent extends React.Component {
     }
 
     handleOnLoad(map) {
-        this.setState({
-            placesService: new google.maps.places.PlacesService(map.map)
-        })
-        this.dao = new SfMoviesDAO(this.state.placesService)
+        // dao requires google maps placeServices which is only available after maps is loaded
+        this.dao = new SfMoviesDAO(new google.maps.places.PlacesService(map.map))
     }
 
     async handleChange(s) {
@@ -49,6 +47,7 @@ class SfMoviesMapComponent extends React.Component {
         let promises = [];
         moviesData.forEach(movie => promises.push(this.dao.findMovieLocation(movie)));
         Promise.all(promises).then((results) => {
+            // each promise returns an array of results, have to flatten to a single array
             let markers = [];
             results
                 .filter((v) => v != null)
