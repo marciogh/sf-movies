@@ -4,6 +4,7 @@ import React from 'react';
 import GoogleMapReact from 'google-map-react';
 import NodeFetch from 'node-fetch';
 import ReactLoading from 'react-loading';
+import Autocomplete from 'react-autocomplete';
 
 class SfMoviesComponent extends React.Component {
 
@@ -24,11 +25,14 @@ class SfMoviesMap extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            moviesAutocomplete: [],
+            movieAutocompleteValue: [],
             markers: [],
             loading: false
         };
         this.handleChange = this.handleChange.bind(this);
         this.handleOnLoad = this.handleOnLoad.bind(this);
+        this.handleAutocompleteOnChange = this.handleAutocompleteOnChange.bind(this);
     }
 
     handleOnLoad(map) {
@@ -38,11 +42,10 @@ class SfMoviesMap extends React.Component {
         })
     }
 
-    async handleChange(event) {
+    async handleChange(s) {
         this.setState({
             markers: [],
         })
-        const s = event.target.value;
         if (s.length < 3) return;
         this.setState({
             loading: true
@@ -80,6 +83,23 @@ class SfMoviesMap extends React.Component {
         })
     }
 
+    async handleAutocompleteOnChange(event, value) {
+        console.log(value)
+        this.setState({
+            movieAutocompleteValue: value
+        });
+        if (value.length < 2) {
+            return;
+        }
+        const movies = await NodeFetch(
+            "https://data.sfgov.org/resource/wwmu-gmzc.json?$select=title&$group=title&$where=starts_with(upper(title),upper('" + encodeURI(value) + "'))"
+        )
+        const moviesData = await movies.json();
+        this.setState({
+            moviesAutocomplete: moviesData
+        });
+    }
+
     render() {
         let sfPoint = {lat: 37.775, lng: -122.450}
         return (
@@ -87,7 +107,34 @@ class SfMoviesMap extends React.Component {
                 <div id={"searchBox"}>
                     <div id={"form"}>
                         <span>Movie search &nbsp;</span>
-                        <input type="text" onChange={this.handleChange} />
+                        <Autocomplete
+                            getItemValue={(item) => item.title}
+                            items={this.state.moviesAutocomplete}
+                            renderItem={(item, highlight) => (
+                                <div style={{ background: highlight ? 'lightgray' : 'white' }}>
+                                    {item.title}
+                                </div>
+                            )}
+                            onChange={this.handleAutocompleteOnChange}
+                            onSelect={(value, item) => {
+                                this.setState({
+                                    movieAutocompleteValue: value
+                                })
+                                this.handleChange(value)
+                            }}
+                            value={this.state.movieAutocompleteValue}
+                            menuStyle={{
+                                borderRadius: '3px',
+                                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.1)',
+                                background: 'rgba(255, 255, 255, 0.9)',
+                                padding: '2px 0',
+                                fontSize: '90%',
+                                position: 'fixed',
+                                overflow: 'auto',
+                                maxHeight: '50%', // TODO: don't cheat, let it flow to the bottom
+                                zIndex: '998',
+                            }}
+                        />
                     </div>
                     <div id={"loading"}>
                     {

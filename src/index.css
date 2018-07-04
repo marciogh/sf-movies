@@ -21,6 +21,7 @@ body {
 }
 
 #sfMoviesMapComponent #searchBox {
+    z-index: 3;
     color: darkblue;
     height: 32px;
 }
