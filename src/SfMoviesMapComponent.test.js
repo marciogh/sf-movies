@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import SfMoviesMap from './SfMoviesMap';
+import SfMoviesMap from './SfMoviesMapComponent';
 
 it('renders without crashing', () => {
   const div = document.createElement('div');

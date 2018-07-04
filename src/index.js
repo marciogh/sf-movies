@@ -1,8 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import SfMoviesMap from './SfMoviesMap'
+import SfMoviesMapComponent from './SfMoviesMapComponent'
 import registerServiceWorker from './registerServiceWorker';
 
-ReactDOM.render(<SfMoviesMap />, document.getElementById('root'));
+ReactDOM.render(<SfMoviesMapComponent />, document.getElementById('root'));
 registerServiceWorker();

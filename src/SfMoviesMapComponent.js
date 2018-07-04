@@ -2,51 +2,12 @@
 
 import React from 'react';
 import GoogleMapReact from 'google-map-react';
-import NodeFetch from 'node-fetch';
 import ReactLoading from 'react-loading';
 import Autocomplete from 'react-autocomplete';
+import SfMoviesWindowComponent from './SfMovieWindowComponent.js'
+import SfMoviesDAO from './SfMoviesDAO.js'
 
-class SfMoviesComponent extends React.Component {
-
-    constructor(props) {
-        super(props)
-        this.state = {
-            infoVisible: false
-        }
-        this.renderOnClick = this.renderOnClick.bind(this)
-    }
-
-    renderOnClick() {
-        this.setState({
-            infoVisible: !this.state.infoVisible
-        })
-    }
-
-    render() {
-        return (
-            <div id={"sfMoviesComponent"}>
-                <img
-                    className={"star"}
-                    alt={this.props.location}
-                    src={"https://upload.wikimedia.org/wikipedia/commons/8/83/Gold_Star_%28with_border%29.svg"}
-                    onClick={this.renderOnClick}
-                />
-                {
-                    this.state.infoVisible ? (
-                            <div className={"info"}>
-                                Movie: {this.props.movie}<br />
-                                Location: {this.props.location} <br />
-                                Google Location: {this.props.place}
-                            </div>
-                    ) : <div />
-                }
-            </div>
-        )
-    };
-
-};
-
-class SfMoviesMap extends React.Component {
+class SfMoviesMapComponent extends React.Component {
 
     constructor(props) {
         super(props);
@@ -63,9 +24,9 @@ class SfMoviesMap extends React.Component {
 
     handleOnLoad(map) {
         this.setState({
-            map: map,
             placesService: new google.maps.places.PlacesService(map.map)
         })
+        this.dao = new SfMoviesDAO(this.state.placesService)
     }
 
     async handleChange(s) {
@@ -76,35 +37,28 @@ class SfMoviesMap extends React.Component {
         this.setState({
             loading: true
         })
-        const movies = await NodeFetch(`https://data.sfgov.org/resource/wwmu-gmzc.json?$where=title='${s}'`)
-        const moviesData = await movies.json();
+        const moviesData = await this.dao.findMovieByTitle(s);
         if (moviesData.length === 0) {
             this.setState({
                 loading: false
             })
             return;
         }
-        moviesData.forEach(movie => {
-            this.setState({
-                loading: true
-            })
-            this.state.placesService.findPlaceFromQuery({
-                query: movie.locations,
-                fields: ['name', 'geometry']
-            }, (results, status) => {
-                if (status === 'OK' && results.length > 0) {
-                    results.map((r) => {
-                        r.movie = movie.title;
-                        r.location = movie.locations;
-                        return r;
-                    });
-                    this.setState({
-                        markers: this.state.markers.concat(results),
-                        loading: false
-                    })
-                }
-            });
+        this.setState({
+            loading: true
         })
+        let promises = [];
+        moviesData.forEach(movie => promises.push(this.dao.findMovieLocation(movie)));
+        Promise.all(promises).then((results) => {
+            let markers = [];
+            results
+                .filter((v) => v != null)
+                .map((v) => v.map((v) => markers.push(v)));
+            this.setState({
+                markers: markers,
+                loading: false
+            })
+        });
     }
 
     async handleAutocompleteOnChange(event, value) {
@@ -120,10 +74,7 @@ class SfMoviesMap extends React.Component {
         this.setState({
             loading: true,
         });
-        const movies = await NodeFetch(
-            "https://data.sfgov.org/resource/wwmu-gmzc.json?$select=title&$group=title&$where=starts_with(upper(title),upper('" + encodeURI(value) + "'))"
-        )
-        const moviesData = await movies.json();
+        const moviesData = await this.dao.searchMovieByTitle(value);
         this.setState({
             loading: false,
             moviesAutocomplete: moviesData
@@ -163,7 +114,12 @@ class SfMoviesMap extends React.Component {
                     <div id={"loading"}>
                     {
                         this.state.loading ?
-                            <ReactLoading type={'balls'} color={'orange'} height={32} width={32} />
+                            <ReactLoading
+                                type={'balls'}
+                                color={'orange'}
+                                height={32}
+                                width={32}
+                            />
                             :
                             null
                     }
@@ -179,14 +135,14 @@ class SfMoviesMap extends React.Component {
                     >
                         {
                             this.state.markers.map(m => {
+                                let lat = m.geometry.location.lat();
+                                let lng = m.geometry.location.lng();
                                 return (
-                                    <SfMoviesComponent
-                                        key={m.geometry.location.lat() + '' + m.geometry.location.lng()}
-                                        movie={m.movie}
-                                        place={m.name}
-                                        location={m.location}
-                                        lat={m.geometry.location.lat()}
-                                        lng={m.geometry.location.lng()}
+                                    <SfMoviesWindowComponent
+                                        key={lat + '-' + lng}
+                                        lat={lat}
+                                        lng={lng}
+                                        movie={m}
                                     />
                                 )
                         })}
@@ -197,4 +153,4 @@ class SfMoviesMap extends React.Component {
     }
 }
 
-export default SfMoviesMap;
+export default SfMoviesMapComponent;
