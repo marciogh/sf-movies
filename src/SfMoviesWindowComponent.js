@@ -1,6 +1,6 @@
 import React from 'react';
 
-class SfMoviesComponent extends React.Component {
+class SfMoviesWindowComponent extends React.Component {
 
     constructor(props) {
         super(props)
@@ -21,7 +21,7 @@ class SfMoviesComponent extends React.Component {
 
     render() {
         return (
-            <div id={"sfMoviesComponent"}>
+            <div id={"sfMoviesWindowComponent"}>
                 <img
                     className={"star"}
                     alt={this.location}
@@ -43,4 +43,4 @@ class SfMoviesComponent extends React.Component {
 
 };
 
-export default SfMoviesComponent;
+export default SfMoviesWindowComponent;

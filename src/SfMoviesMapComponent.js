@@ -4,7 +4,7 @@ import React from 'react';
 import GoogleMapReact from 'google-map-react';
 import ReactLoading from 'react-loading';
 import Autocomplete from 'react-autocomplete';
-import SfMoviesWindowComponent from './SfMovieWindowComponent.js'
+import SfMoviesWindowComponent from './SfMoviesWindowComponent.js'
 import SfMoviesDAO from './SfMoviesDAO.js'
 
 class SfMoviesMapComponent extends React.Component {
