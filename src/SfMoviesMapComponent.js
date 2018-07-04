@@ -13,7 +13,6 @@ class SfMoviesMapComponent extends React.Component {
         super(props);
         this.state = {
             moviesAutocomplete: [],
-            movieAutocompleteValue: [],
             markers: [],
             loading: false
         };
@@ -63,7 +62,7 @@ class SfMoviesMapComponent extends React.Component {
 
     async handleAutocompleteOnChange(event, value) {
         this.setState({
-            movieAutocompleteValue: value
+            moviesAutocompleteValue: value
         });
         if (value.length < 2) {
             this.setState({
@@ -98,11 +97,11 @@ class SfMoviesMapComponent extends React.Component {
                             onChange={this.handleAutocompleteOnChange}
                             onSelect={(value, item) => {
                                 this.setState({
-                                    movieAutocompleteValue: value
+                                    moviesAutocompleteValue: value
                                 })
                                 this.handleChange(value)
                             }}
-                            value={this.state.movieAutocompleteValue}
+                            value={this.state.moviesAutocompleteValue}
                             menuStyle={{
                                 position: 'fixed',
                                 overflow: 'auto',

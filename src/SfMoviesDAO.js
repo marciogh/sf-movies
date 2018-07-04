@@ -1,7 +1,7 @@
 import NodeFetch from 'node-fetch';
 
 var placesService;
-var sfMoviesUrl = "https://data.sfgov.org/resource/wwmu-gmzc.json";
+const sfMoviesUrl = "https://data.sfgov.org/resource/wwmu-gmzc.json";
 
 class SfMoviesDAO {
 
